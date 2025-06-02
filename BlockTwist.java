@@ -22,6 +22,7 @@ public class BlockTwist {
 
 }
 
+@SuppressWarnings("serial")
 class GamePanel extends JPanel{
 	private final int ROWS = 8;
 	private final int COLS = 8;
@@ -52,10 +53,12 @@ class GamePanel extends JPanel{
 		setLayout(null);
 		setBackground(new Color(240, 240, 240));
 		
-		scoreLabel = new JLabel(" ");
-		scoreLabel.setBounds(100, 20, 200, 30);
+		scoreLabel = new JLabel("Score: 0");
+		scoreLabel.setBounds(grid_x, 20, 200, 30);
 		scoreLabel.setFont(new Font("Arial", Font.BOLD, 20));
 		add(scoreLabel);
+		
+		generateShapes();
 		
 		// MouseListener za klik
 		addMouseListener(new MouseAdapter() {
@@ -77,11 +80,14 @@ class GamePanel extends JPanel{
 								chosen_row = row - ind * (SHAPE_SIZE + 1);
 								if (contains(table[ind], chosen_row, chosen_col) == true) {
 									chosen_shape = ind;
+									repaint();
 								}
 							}
 						}
 					}	
-				}else {
+					System.out.println(chosen_row +" "+chosen_col);
+				}
+				else {
 					if (x < grid_width + grid_x && grid_x < x && y < grid_height + grid_y && grid_y < y) {
 					
 						// izračunamo na katerem mestu je bil klik
@@ -89,57 +95,107 @@ class GamePanel extends JPanel{
 						int row = (y - grid_y)/cell_size;
 						
 						// če je klik znotraj mreže in polje prazno
-						if (col >= 0 && col < COLS && row >= 0 && row < ROWS){
-							if (free(table[chosen_shape],row, col ) == true) {
-								// moramo pobarvati blokce v matriki, ki pripadajo liku, ki smo ga imeli izbrano
-							}
-						
-							if (grid[row][col] == 0) {
+						if (col >= 0 && col < COLS && row >= 0 && row < ROWS && canPlace(table[chosen_shape], row, col)){
+							/*if (free(table[chosen_shape],row, col ) == true) {
+							}*/
+							placeShape(table[chosen_shape], row, col);
+							table[chosen_shape] = null;
+							chosen_shape = -1;
+							checkAndClearLines();
+							repaint();
+							
+							// če so vsi liki uporabljeni generiramo nove
+							if (allUsed()) {
+								generateShapes();
+							
+							/*
+							if (grid[row][col] == null) {
 								grid[row][col] = 1; //postavi blok
 								repaint();
 								checkAndClearLines(); //preveri in izbriše polne vrstice
 							}
+							*/
 						}
 						
 					}
-				
+						System.out.println(row+" "+col);
 				}
-		});
+				
+			};
 		
 		// tajmer za animacijo, lahko tudi a premikanje kasnej
 		/*Timer timer = new Timer(100, e -> repaint()); // lahko še probaš dat notr hasGridChanged
 		timer.start();*/
+		}});
+	}
+		
+	private void generateShapes() {
+		Shape[]options = Shape.getAllShapes();
+		for (int i = 0; i < SHAPE_NUM; i++) {
+			table[i] = options[random.nextInt(options.length)];
+		}
+	}
+	
+	private boolean canPlace(Shape shape, int row, int col) {
+		for (int[] block : shape.shapeMatrix) {
+			int newRow = row + block[0] - chosen_row;
+			int newCol = col + block[1] - chosen_col;
+			if (newRow < 0 || newRow >= ROWS || newCol < 0 || newCol >= COLS || grid[newRow][newCol] != null) {
+				return false;
+			}
+		}
+		return true;
+	}
+	
+	private boolean allUsed() {
+		for (Shape s : table) {
+			if (s != null) {
+				return false;		
+			}
+		}
+		return true;
+	}
+	
+	private void placeShape(Shape shape, int row, int col) {
+		for (int[]block : shape.shapeMatrix) {
+			int newRow = row + block[0] - chosen_row;
+			int newCol = col + block[1] - chosen_col;
+			grid[newRow][newCol] = shape.color;
+		}
 	}
 	public boolean contains(Shape shape, int row, int col) {
-		for (int i = 0; i < shape.shapeMatrix.lenght; i++) {
-			if (col == shape.shapeMatrix[i][1] && row == shape_shapeMatrix[i][0])
+		for (int i = 0; i < shape.shapeMatrix.length; i++) {
+			if (col == shape.shapeMatrix[i][1] && row == shape.shapeMatrix[i][0])
 				return true;
 		}
 		return false;
 	}
-	
+	/*
 	public boolean free(Shape shape, int row, int col) {
-		for (int i = 0; i < shape.shapeMatrix.lenght; i++) {
-			if (grid[row - shape.shapeMatrix[i][0] + chosen_row][col - shape.shapeMatrix[i][1] + chosen_col] != null)
+		for (int i = 0; i < shape.shapeMatrix.length; i++) {
+			int newRow = row + shape.shapeMatrix[i][0] - chosen_row;
+			int newCol = col + shape.shapeMatrix[i][1] - chosen_col;
+			if (newRow < 0 || newCol < 0 || newRow < ROWS || newCol < COLS) {
+				continue;
+			}
+			if (grid[newRow][newCol] != null)
 				return false;
 		}
 		return true;
-	}
-	public 
-	
+	} */
 	
 	public void polni() {
 		for(int i = 0; i < SHAPE_NUM; i++) {
-			table[i] = liki[(int)(Math.random()*SHAPE_NUM)];
+			table[i] = Shape.LIKI[(int)(Math.random()*SHAPE_NUM)];
 		}
 	}
 	private void checkAndClearLines() {
-		
 		// preverja vrstice
 		for (int row = 0; row < ROWS; row++) {
 			boolean full = true;
+			
 			for (int col = 0; col < COLS; col++) {
-				if (grid[row][col] == 0) {
+				if (grid[row][col] == null) {
 					full = false;
 					break;
 				}
@@ -147,17 +203,16 @@ class GamePanel extends JPanel{
 			if (full) {
 				// počisti vrstico
 				for (int col = 0; col < COLS; col++) {
-					grid[row][col] = 0;
+					grid[row][col] = null;
 				}
 				score += 10;
-				updateScore();
 			}
 		}
 		// preverja stolpce
 		for (int col = 0; col < COLS; col++) {
 			boolean full = true;
 			for (int row = 0; row < ROWS; row++) {
-				if (grid[row][col] == 0) {
+				if (grid[row][col] == null) {
 					full = false;
 					break;
 				}
@@ -165,12 +220,12 @@ class GamePanel extends JPanel{
 			if (full) {
 				//počisti stolpec
 				for (int row = 0; row < ROWS; row++) {
-					grid[row][col] = 0;
+					grid[row][col] = null;
 				}
 				score += 10;
-				updateScore();
 			}
 		}
+		updateScore();
 	}
 	private void updateScore() {
 		scoreLabel.setText("Score: " + score);
@@ -186,8 +241,8 @@ class GamePanel extends JPanel{
 				int x = grid_x + col * cell_size;
 				int y = grid_y+ row * cell_size;
 				
-				if (grid[row][col] == 1) {
-					g.setColor(Color.BLUE);
+				if (grid[row][col] != null) {
+					g.setColor(grid[row][col]);
 				}else {
 					g.setColor(Color.LIGHT_GRAY);
 				}
@@ -195,6 +250,35 @@ class GamePanel extends JPanel{
 				g.setColor(Color.GRAY);
 				g.drawRect(x, y, cell_size, cell_size);
 			}
+		}
+		//nriše like na desni strani v tabeli
+		for (int i = 0; i < SHAPE_NUM; i++) {
+			Shape shape = table[i];
+			if (shape == null) continue;
+			
+			int shapeRowOffset = i * (SHAPE_SIZE +1);
+			
+			for (int[] block : shape.shapeMatrix) {
+				int row = block[0];
+				int col = block[1];
+				int x = table_x + col * cell_size;
+				int y = table_y + (row + shapeRowOffset) * cell_size;
+				
+				g.setColor(shape.getColor());
+				g.fillRect(x, y, cell_size, cell_size);
+				g.setColor(Color.DARK_GRAY);
+				g.drawRect(x, y, cell_size, cell_size);
+			}
+		}
+		if (chosen_shape >= 0) {
+			int col = table_x + chosen_col * cell_size + cell_size / 2;
+			int row = table_y + (chosen_row + (SHAPE_SIZE + 1) * chosen_shape)*cell_size + cell_size / 2;
+			int length = 10;
+			
+			g.drawLine(col - length, row - length, col + length, row + length);
+			g.drawLine(col - length, row + length, col + length, row - length);
+			
+			System.out.println(row+" "+col);
 		}
 	}
 }
