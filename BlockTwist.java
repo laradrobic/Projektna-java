@@ -128,7 +128,33 @@ class GamePanel extends JPanel{
 							System.out.println(chosen_row +" "+chosen_col);
 						}
 						else {
-							if (x < grid_width + grid_x && grid_x < x && y < grid_height + grid_y && grid_y < y) {
+							int ind = chosen_shape;
+							int minRow = Integer.MAX_VALUE;
+							int maxRow = Integer.MIN_VALUE;
+							Shape shape = table[ind];
+							
+							for (int[] block : shape.shapeMatrix) {
+								minRow = Math.min(minRow, block[0]);
+								maxRow = Math.max(maxRow, block[0]); 
+							}
+							int shapeHeight = maxRow - minRow + 1;
+							int centerOffset = (SHAPE_SIZE - shapeHeight) / 2;
+							
+							//izračuna pozicijo klika
+							int shapeRowOffset = ind * (SHAPE_SIZE + 1);
+							int relativeRow = (y - table_y) / cell_size - shapeRowOffset;
+							int relativeCol = (x - table_x) / cell_size;
+							
+							int blockRow = relativeRow - centerOffset + minRow;
+							
+							if (contains(shape, blockRow, relativeCol)) {
+								//odoznači klik na že označenm liku
+								chosen_shape = -1;
+								chosen_col = -1;
+								chosen_row = -1;
+								repaint();
+							}								
+							else if (x < grid_width + grid_x && grid_x < x && y < grid_height + grid_y && grid_y < y) {
 							
 								// izračunamo na katerem mestu je bil klik
 								int col = (x - grid_x)/ cell_size;
@@ -165,10 +191,6 @@ class GamePanel extends JPanel{
 						}
 						
 					};
-				
-				// tajmer za animacijo, lahko tudi a premikanje kasnej
-				/*Timer timer = new Timer(100, e -> repaint()); // lahko še probaš dat notr hasGridChanged
-				timer.start();*/
 				}});
 			}
 	private void adjustLayout(int newWidth, int newHeight) {
