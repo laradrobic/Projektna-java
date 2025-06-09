@@ -85,76 +85,92 @@ class GamePanel extends JPanel{
 
 		
 		// MouseListener za klik
-		addMouseListener(new MouseAdapter() {
-			@Override
-			public void mouseClicked(MouseEvent e) {
-				int x = e.getX();
-				int y = e.getY();
-				
-					
-				if (chosen_shape < 0) {
-					if (x > table_x && y > table_y) {
-						int row = (y - table_y) / cell_size;
-						int col = (x- table_x) / cell_size;
+				addMouseListener(new MouseAdapter() {
+					@Override
+					public void mouseClicked(MouseEvent e) {
+						int x = e.getX();
+						int y = e.getY();
 						
-						if (row < TABLE_ROWS && col < TABLE_COLS) {
-							int ind = row / (SHAPE_SIZE + 1);
-							if (row - ind * (SHAPE_SIZE + 1) < SHAPE_SIZE) {
-								chosen_col = col;
-								chosen_row = row - ind * (SHAPE_SIZE + 1);
-								if (contains(table[ind], chosen_row, chosen_col) == true) {
-									chosen_shape = ind;
-									repaint();
+							
+						if (chosen_shape < 0) {
+							if (x > table_x && y > table_y) {
+								int row = (y - table_y) / cell_size;
+								int col = (x- table_x) / cell_size;
+								
+								if (row < TABLE_ROWS && col < TABLE_COLS) {
+									int ind = row / (SHAPE_SIZE + 1);
+									if (row - ind * (SHAPE_SIZE + 1) < SHAPE_SIZE) {
+										Shape shape = table[ind];
+										if (shape != null) {
+											int minRow = Integer.MAX_VALUE;
+											int maxRow = Integer.MIN_VALUE;
+											
+											for (int[] block: shape.shapeMatrix) {
+												minRow = Math.min(minRow, block[0]);
+												maxRow = Math.max(maxRow, block[0]);
+											}
+											int shapeHeight = maxRow - minRow + 1;
+											int centerOffset = (SHAPE_SIZE - shapeHeight) / 2;
+											
+											int blockRow = row - ind * (SHAPE_SIZE + 1) - centerOffset + minRow;
+											
+											if(contains(shape, blockRow, col)) {
+												chosen_col = col;
+												chosen_row = blockRow;
+												chosen_shape = ind;
+												repaint();
+											}
+											
+										}
+									}
 								}
-							}
+							}	
+							System.out.println(chosen_row +" "+chosen_col);
 						}
-					}	
-					System.out.println(chosen_row +" "+chosen_col);
-				}
-				else {
-					if (x < grid_width + grid_x && grid_x < x && y < grid_height + grid_y && grid_y < y) {
-					
-						// izračunamo na katerem mestu je bil klik
-						int col = (x - grid_x)/ cell_size;
-						int row = (y - grid_y)/cell_size;
-						
-						// če je klik znotraj mreže in polje prazno
-						if (col >= 0 && col < COLS && row >= 0 && row < ROWS && canPlace(table[chosen_shape], row, col)){
-							/*if (free(table[chosen_shape],row, col ) == true) {
-							}*/
-							placeShape(table[chosen_shape], row, col);
-							table[chosen_shape] = null;
-							chosen_shape = -1;
-							checkAndClearLines();
-							repaint();
+						else {
+							if (x < grid_width + grid_x && grid_x < x && y < grid_height + grid_y && grid_y < y) {
 							
-							// če so vsi liki uporabljeni generiramo nove
-							if (allUsed()) {
-								generateShapes();
-							
-							/*
-							if (grid[row][col] == null) {
-								grid[row][col] = 1; //postavi blok
-								repaint();
-								checkAndClearLines(); //preveri in izbriše polne vrstice
+								// izračunamo na katerem mestu je bil klik
+								int col = (x - grid_x)/ cell_size;
+								int row = (y - grid_y)/cell_size;
+								
+								// če je klik znotraj mreže in polje prazno
+								if (col >= 0 && col < COLS && row >= 0 && row < ROWS && canPlace(table[chosen_shape], row, col)){
+									/*if (free(table[chosen_shape],row, col ) == true) {
+									}*/
+									placeShape(table[chosen_shape], row, col);
+									table[chosen_shape] = null;
+									chosen_shape = -1;
+									checkAndClearLines();
+									repaint();
+									
+									// če so vsi liki uporabljeni generiramo nove
+									if (allUsed()) {
+										generateShapes();
+									
+									/*
+									if (grid[row][col] == null) {
+										grid[row][col] = 1; //postavi blok
+										repaint();
+										checkAndClearLines(); //preveri in izbriše polne vrstice
+									}
+									*/
+								}
+									if (!canPlaceShape()) {
+										gameOver();
+									}
+								
 							}
-							*/
+								System.out.println(row+" "+col);
 						}
-							if (!canPlaceShape()) {
-								gameOver();
-							}
 						
-					}
-						System.out.println(row+" "+col);
-				}
+					};
 				
-			};
-		
-		// tajmer za animacijo, lahko tudi a premikanje kasnej
-		/*Timer timer = new Timer(100, e -> repaint()); // lahko še probaš dat notr hasGridChanged
-		timer.start();*/
-		}});
-	}
+				// tajmer za animacijo, lahko tudi a premikanje kasnej
+				/*Timer timer = new Timer(100, e -> repaint()); // lahko še probaš dat notr hasGridChanged
+				timer.start();*/
+				}});
+			}
 	private void adjustLayout(int newWidth, int newHeight) {
 		int padding = 110;
 		cell_size = Math.max(30, Math.min((newWidth - 2 * padding) / COLS, (newHeight - 2 * padding) / ROWS));
@@ -412,6 +428,7 @@ class GamePanel extends JPanel{
 			int row = table_y + (chosen_row + (SHAPE_SIZE + 1) * chosen_shape)*cell_size + cell_size / 2;
 			int length = 10;
 			
+			g2d.setColor(Color.BLACK);
 			g2d.drawLine(col - length, row - length, col + length, row + length);
 			g2d.drawLine(col - length, row + length, col + length, row - length);
 			
