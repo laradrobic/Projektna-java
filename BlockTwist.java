@@ -1,6 +1,12 @@
+package projektnaJava;
+
 import java.awt.*;
 import java.awt.event.*;
+import java.security.PublicKey;
+
 import javax.swing.*;
+import javax.swing.text.StyledEditorKit.BoldAction;
+
 import java.util.Random;
 
 public class BlockTwist {
@@ -19,6 +25,7 @@ public class BlockTwist {
 			frame.setVisible(true);
 		});
 	}
+	
 
 }
 
@@ -43,6 +50,7 @@ class GamePanel extends JPanel{
 	private int chosen_row = -1;
 	private int chosen_col = -1;
 	
+	
 	private Color[][] grid = new Color[ROWS][COLS]; // 2D matrika (null- prazno)
 	private Shape[] table = new Shape[SHAPE_NUM];
 	private int score = 0;
@@ -55,10 +63,26 @@ class GamePanel extends JPanel{
 		
 		scoreLabel = new JLabel("Score: 0");
 		scoreLabel.setBounds(grid_x, 20, 200, 30);
-		scoreLabel.setFont(new Font("Arial", Font.BOLD, 20));
+		scoreLabel.setFont(new Font("Algerian", Font.BOLD, 28));
 		add(scoreLabel);
 		
 		generateShapes();
+		
+		addComponentListener(new ComponentAdapter() {
+			@Override
+			public void componentResized(ComponentEvent e) {
+				adjustLayout(getWidth(), getHeight());
+				revalidate();
+			}
+			
+			@Override
+			public void componentShown(ComponentEvent e) {
+				adjustLayout(getWidth(), getHeight());
+				revalidate();
+				repaint();
+			}
+		});	
+
 		
 		// MouseListener za klik
 		addMouseListener(new MouseAdapter() {
@@ -116,6 +140,9 @@ class GamePanel extends JPanel{
 							}
 							*/
 						}
+							if (!canPlaceShape()) {
+								gameOver();
+							}
 						
 					}
 						System.out.println(row+" "+col);
@@ -127,6 +154,23 @@ class GamePanel extends JPanel{
 		/*Timer timer = new Timer(100, e -> repaint()); // lahko še probaš dat notr hasGridChanged
 		timer.start();*/
 		}});
+	}
+	private void adjustLayout(int newWidth, int newHeight) {
+		int padding = 110;
+		cell_size = Math.max(30, Math.min((newWidth - 2 * padding) / COLS, (newHeight - 2 * padding) / ROWS));
+		grid_width = COLS * cell_size;
+		grid_height = ROWS * cell_size;
+		grid_x = padding;
+		grid_y = padding;
+		
+		table_x = grid_x + grid_width + padding;
+		table_y = grid_y + (grid_height - table_height) / 2;
+		table_width = TABLE_COLS * cell_size;
+		table_height = TABLE_ROWS  * cell_size;
+		
+		scoreLabel.setBounds(grid_x, grid_y - 60 ,200, 30);
+		
+		repaint();
 	}
 		
 	private void generateShapes() {
@@ -163,6 +207,9 @@ class GamePanel extends JPanel{
 			grid[newRow][newCol] = shape.color;
 		}
 	}
+	
+
+	
 	public boolean contains(Shape shape, int row, int col) {
 		for (int i = 0; i < shape.shapeMatrix.length; i++) {
 			if (col == shape.shapeMatrix[i][1] && row == shape.shapeMatrix[i][0])
@@ -170,6 +217,30 @@ class GamePanel extends JPanel{
 		}
 		return false;
 	}
+	
+	private boolean canPlaceShape() {
+		for(Shape shape: table) {
+			if (shape == null) continue;
+			
+			for(int row = 0; row < ROWS; row++) {
+				for(int col = 0; col < COLS; col++) {
+					boolean canPlaceBoolean = true;
+					for (int[] block: shape.shapeMatrix) {
+						int newRow = row + block[0];
+						int newCol = col + block[1];
+						
+						if (newRow < 0 || newRow >= ROWS || newCol < 0 || newCol >= COLS || grid[newRow][newCol] != null) {
+							canPlaceBoolean= false;
+							break;
+						}
+					}
+					if (canPlaceBoolean) return true;
+				}
+			}
+		}
+	return false; //ne moremo nič več postaviti
+}
+	
 	/*
 	public boolean free(Shape shape, int row, int col) {
 		for (int i = 0; i < shape.shapeMatrix.length; i++) {
@@ -189,6 +260,9 @@ class GamePanel extends JPanel{
 			table[i] = Shape.LIKI[(int)(Math.random()*SHAPE_NUM)];
 		}
 	}
+	
+
+	
 	private void checkAndClearLines() {
 		// preverja vrstice
 		for (int row = 0; row < ROWS; row++) {
@@ -227,13 +301,43 @@ class GamePanel extends JPanel{
 		}
 		updateScore();
 	}
+	
+
+	
 	private void updateScore() {
 		scoreLabel.setText("Score: " + score);
 	}
+	private void gameOver() {
+		JOptionPane.showMessageDialog(this, "Game Over!\n Final Score: " + score, "Game Over", JOptionPane.INFORMATION_MESSAGE);
+		resetGame();
+	}
 	
+	private void resetGame() {
+		for(int row = 0; row < ROWS; row++) {
+			for (int col = 0; col < COLS; col++) {
+				grid[row][col] = null;
+			}
+		}
+		score = 0;
+		updateScore();
+		chosen_shape = -1;
+		chosen_col = -1;
+		chosen_row = -1;
+		generateShapes();
+		repaint();
+	}
+
 	@Override
 	protected void paintComponent(Graphics g) {
 		super.paintComponent(g);
+		Graphics2D g2d = (Graphics2D) g;
+		
+		g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+		
+		//Gradiantno ozadje
+		GradientPaint gradient = new GradientPaint(0, 0, new Color(239, 226, 243), getWidth(), getHeight(), new Color(226, 243, 243));
+		g2d.setPaint(gradient);
+		g2d.fillRect(0, 0, getWidth(), getHeight());
 		
 		//okvir igralnega polja
 		for (int row = 0; row < ROWS ; row++) {
@@ -241,42 +345,75 @@ class GamePanel extends JPanel{
 				int x = grid_x + col * cell_size;
 				int y = grid_y+ row * cell_size;
 				
+				
 				if (grid[row][col] != null) {
-					g.setColor(grid[row][col]);
+					//senca
+					g2d.setColor(grid[row][col].darker());
+					g2d.fillRoundRect(x + 3, y + 3, cell_size, cell_size, 12, 12);
+					// osnovni blok
+					g2d.setColor(grid[row][col]);
+					g2d.fillRoundRect(x, y, cell_size, cell_size, 12, 12);
 				}else {
-					g.setColor(Color.LIGHT_GRAY);
+					g2d.setColor(new Color(220, 220, 220));
 				}
-				g.fillRect(x, y, cell_size, cell_size);
-				g.setColor(Color.GRAY);
-				g.drawRect(x, y, cell_size, cell_size);
+				//obroba
+				g2d.setColor(new Color(180, 180, 180));
+				g2d.drawRoundRect(x, y, cell_size, cell_size, 10, 10);
+;
 			}
 		}
-		//nriše like na desni strani v tabeli
+		
+		//Nariše like na desni strani v tabeli
 		for (int i = 0; i < SHAPE_NUM; i++) {
 			Shape shape = table[i];
 			if (shape == null) continue;
 			
+			int minRow = Integer.MAX_VALUE;
+			int maxRow = Integer.MIN_VALUE;
+
+			for (int[] block: shape.shapeMatrix) {
+				minRow = Math.min(minRow, block[0]);
+				maxRow = Math.max(maxRow, block[0]);
+				}
+			
+			int shapeHeight = maxRow - minRow + 1;
 			int shapeRowOffset = i * (SHAPE_SIZE +1);
+			int centerOffset = (SHAPE_SIZE - shapeHeight) / 2;
 			
 			for (int[] block : shape.shapeMatrix) {
-				int row = block[0];
+				int row = block[0] - minRow + centerOffset;
 				int col = block[1];
+				
 				int x = table_x + col * cell_size;
 				int y = table_y + (row + shapeRowOffset) * cell_size;
 				
-				g.setColor(shape.getColor());
-				g.fillRect(x, y, cell_size, cell_size);
-				g.setColor(Color.DARK_GRAY);
-				g.drawRect(x, y, cell_size, cell_size);
+				//senca
+				g2d.setColor(shape.getColor());
+				g2d.fillRoundRect(x, y, cell_size, cell_size, 12, 12);
+				
+				// obroba
+				g2d.setColor(Color.DARK_GRAY);
+				g2d.drawRoundRect(x, y, cell_size, cell_size, 12, 12);
+
+			}
+			
+			//označi izbran lik
+			if (chosen_shape == i) {
+				int highlightX = table_x - 8;
+				int highlightY = table_y + shapeRowOffset * cell_size - 8;
+				int hHeight = (SHAPE_SIZE + 1) * cell_size;
+				
+				g2d.setColor(new Color(255, 255, 255, 80));
 			}
 		}
+		//Nariše x kot indikator i
 		if (chosen_shape >= 0) {
 			int col = table_x + chosen_col * cell_size + cell_size / 2;
 			int row = table_y + (chosen_row + (SHAPE_SIZE + 1) * chosen_shape)*cell_size + cell_size / 2;
 			int length = 10;
 			
-			g.drawLine(col - length, row - length, col + length, row + length);
-			g.drawLine(col - length, row + length, col + length, row - length);
+			g2d.drawLine(col - length, row - length, col + length, row + length);
+			g2d.drawLine(col - length, row + length, col + length, row - length);
 			
 			System.out.println(row+" "+col);
 		}
