@@ -346,8 +346,9 @@ class GamePanel extends JPanel{
 		scoreLabel.setText("Score: " + score);
 	}
 	private void gameOver() {
-		JOptionPane.showMessageDialog(this, "Game Over!\n Final Score: " + score, "Game Over", JOptionPane.INFORMATION_MESSAGE);
-		resetGame();
+		JFrame topFrame = (JFrame) SwingUtilities.getWindowAncestor(this);
+		GameOver dialog = new GameOver(topFrame, score);
+		dialog.setVisible(true);
 	}
 	
 	private void resetGame() {
