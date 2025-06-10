@@ -6,7 +6,7 @@ import java.awt.event.*;
 
 
 public class GameOver extends JDialog {
-	public GameOver(JFrame parent, int score) {
+	public GameOver(JFrame parent, int score, Runnable onReastart) {
 		super(parent, "Game Over", true);
 		setLayout(new BorderLayout());
 		setSize(350, 200);
@@ -54,11 +54,11 @@ public class GameOver extends JDialog {
 		
 		add(messagePanel, BorderLayout.CENTER);
 		
+		//gumbi
 		playAgain.setBackground(button);
 		playAgain.setForeground(Color.WHITE);
 		exitButton.setBackground(button);
 		exitButton.setForeground(Color.WHITE);
-		
 		
 		buttonPanel.add(playAgain);
 		buttonPanel.add(exitButton);
@@ -67,11 +67,15 @@ public class GameOver extends JDialog {
 		
 		playAgain.addActionListener(e -> {
 			dispose();
+			onReastart.run();
 		});
 		
 		exitButton.addActionListener(e ->{
 			System.exit(0);
+			
+
 		});
+		
 		
 	}
 }

@@ -347,7 +347,7 @@ class GamePanel extends JPanel{
 	}
 	private void gameOver() {
 		JFrame topFrame = (JFrame) SwingUtilities.getWindowAncestor(this);
-		GameOver dialog = new GameOver(topFrame, score);
+		GameOver dialog = new GameOver(topFrame, score, this::resetGame);
 		dialog.setVisible(true);
 	}
 	
