@@ -1,12 +1,6 @@
-package projektnaJava;
-
 import java.awt.*;
 import java.awt.event.*;
-import java.security.PublicKey;
-
 import javax.swing.*;
-import javax.swing.text.StyledEditorKit.BoldAction;
-
 import java.util.Random;
 
 public class BlockTwist {
@@ -66,6 +60,7 @@ class GamePanel extends JPanel{
 		scoreLabel.setFont(new Font("Algerian", Font.BOLD, 28));
 		add(scoreLabel);
 		
+		//generiramo tri like na desnem polju
 		generateShapes();
 		
 		addComponentListener(new ComponentAdapter() {
@@ -162,8 +157,6 @@ class GamePanel extends JPanel{
 								
 								// če je klik znotraj mreže in polje prazno
 								if (col >= 0 && col < COLS && row >= 0 && row < ROWS && canPlace(table[chosen_shape], row, col)){
-									/*if (free(table[chosen_shape],row, col ) == true) {
-									}*/
 									placeShape(table[chosen_shape], row, col);
 									table[chosen_shape] = null;
 									chosen_shape = -1;
@@ -174,14 +167,8 @@ class GamePanel extends JPanel{
 									if (allUsed()) {
 										generateShapes();
 									
-									/*
-									if (grid[row][col] == null) {
-										grid[row][col] = 1; //postavi blok
-										repaint();
-										checkAndClearLines(); //preveri in izbriše polne vrstice
-									}
-									*/
 								}
+									// če v matriki na levi ni prostora da postavimo katerikoli lik iz desne se igra 'zaključi'
 									if (!canPlaceShape()) {
 										gameOver();
 									}
@@ -228,7 +215,7 @@ class GamePanel extends JPanel{
 		}
 		return true;
 	}
-	
+	//preveri če smo porabili vse tri like iz desne
 	private boolean allUsed() {
 		for (Shape s : table) {
 			if (s != null) {
@@ -279,27 +266,11 @@ class GamePanel extends JPanel{
 	return false; //ne moremo nič več postaviti
 }
 	
-	/*
-	public boolean free(Shape shape, int row, int col) {
-		for (int i = 0; i < shape.shapeMatrix.length; i++) {
-			int newRow = row + shape.shapeMatrix[i][0] - chosen_row;
-			int newCol = col + shape.shapeMatrix[i][1] - chosen_col;
-			if (newRow < 0 || newCol < 0 || newRow < ROWS || newCol < COLS) {
-				continue;
-			}
-			if (grid[newRow][newCol] != null)
-				return false;
-		}
-		return true;
-	} */
-	
 	public void polni() {
 		for(int i = 0; i < SHAPE_NUM; i++) {
 			table[i] = Shape.LIKI[(int)(Math.random()*SHAPE_NUM)];
 		}
 	}
-	
-
 	
 	private void checkAndClearLines() {
 		// preverja vrstice
@@ -340,11 +311,10 @@ class GamePanel extends JPanel{
 		updateScore();
 	}
 	
-
-	
 	private void updateScore() {
 		scoreLabel.setText("Score: " + score);
 	}
+	
 	private void gameOver() {
 		JFrame topFrame = (JFrame) SwingUtilities.getWindowAncestor(this);
 		GameOver dialog = new GameOver(topFrame, score, this::resetGame);
@@ -398,7 +368,7 @@ class GamePanel extends JPanel{
 				//obroba
 				g2d.setColor(new Color(180, 180, 180));
 				g2d.drawRoundRect(x, y, cell_size, cell_size, 10, 10);
-;
+
 			}
 		}
 		
@@ -435,16 +405,8 @@ class GamePanel extends JPanel{
 				g2d.drawRoundRect(x, y, cell_size, cell_size, 12, 12);
 
 			}
-			
-			//označi izbran lik
-			if (chosen_shape == i) {
-				int highlightX = table_x - 8;
-				int highlightY = table_y + shapeRowOffset * cell_size - 8;
-				int hHeight = (SHAPE_SIZE + 1) * cell_size;
-				
-				g2d.setColor(new Color(255, 255, 255, 80));
-			}
 		}
+		
 		//Nariše x kot indikator i
 		if (chosen_shape >= 0) {
 			int col = table_x + chosen_col * cell_size + cell_size / 2;

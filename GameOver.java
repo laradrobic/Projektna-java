@@ -1,11 +1,9 @@
-package projektnaJava;
-
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.*;
 
-
+@SuppressWarnings("serial")
 public class GameOver extends JDialog {
+
 	public GameOver(JFrame parent, int score, Runnable onReastart) {
 		super(parent, "Game Over", true);
 		setLayout(new BorderLayout());
@@ -14,19 +12,11 @@ public class GameOver extends JDialog {
 		setLayout(new BorderLayout());
 		
 		//Barve
-		Color bacground = new Color(240, 240, 240);
 		Color button = new Color(70, 130, 180);
-		Color text = new Color(30, 30, 30);
 		
-		//panel za sppročilo
+		//panel za sporočilo
 		JPanel messagePanel = new JPanel();
 		messagePanel.setLayout(new BoxLayout(messagePanel, BoxLayout.Y_AXIS));
-		
-		/*
-		JLabel gameOverLabel = new JLabel("❌ Game Over!", SwingConstants.CENTER);
-		gameOverLabel.setFont(new Font("Arial", Font.BOLD, 20));
-		gameOverLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
-		*/
 		
 		ImageIcon originalIcon = new ImageIcon(getClass().getResource("game-over.png"));
 		Image originalImage = originalIcon.getImage();
@@ -74,8 +64,6 @@ public class GameOver extends JDialog {
 			System.exit(0);
 			
 
-		});
-		
-		
+		});		
 	}
 }

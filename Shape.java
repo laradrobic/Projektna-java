@@ -1,9 +1,4 @@
-package projektna;
-
-import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.security.PublicKey;
 
 public class Shape{
     protected int[][] shapeMatrix;
